@@ -1,27 +1,17 @@
-// const asynchandler=(requestHandler)=>{
-//     (req,res,next)=>{
-//         Promise.resolve(
-//             requestHandler(req,res,next)
-//         ).catch((err)=>next(err))
-//     }
-// }
-
-const asynchandler=(requestHandler)=>{
+const asyncHandler=(requestHandler)=>{
     (req,res,next)=>{
-        Promise
-        .resolve(
-            requestHandler(req,res,next) //execute requestHandler
-        )
+        Promise.resolve(requestHandler(req,res,next))
         .catch((err)=>{next(err)})
     }
 }
 
-export {asynchandler}
+
+export {asyncHandler}
 
 
-// const asynchandler=(fn)=>async(res,req,next)=>{
+// const asyncHandlertrycatch=async (fn)=>()=>{
 //     try {
-            // await fn(req,res,next)
+//         await fn(req,res,next)
 //     } catch (error) {
 //         res.status(error.code || 500).json({
 //             success:false,
