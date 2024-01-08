@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import bodyParser from "body-parser";
+import userRouter from "./routes/user.route.js";
 
 const app=express();
 
@@ -21,6 +22,8 @@ app.use(bodyParser.urlencoded({
 
 app.use(express.static("public"))
 
+//routes declaration
+app.use("/api/v1/users",userRouter)
 
 export {app}
 
