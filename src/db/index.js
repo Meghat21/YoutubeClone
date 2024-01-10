@@ -4,7 +4,7 @@ import { DB_NAME } from "../constants.js";
 
 const connectDb=async()=>{
     try {
-        const dbInstance=await mongoose.connect("mongodb://localhost/codeial_development");
+        const dbInstance=await mongoose.connect("mongodb://localhost/YoutubeClone");
         // const dbInstance=await mongoose.connect(`${process.env.MONGODB_URL}/$`);
         console.log(dbInstance)
         console.log(`mongodb connected ${dbInstance.connection.host}`)
