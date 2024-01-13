@@ -336,4 +336,71 @@ const updateUserCoverImage=asyncHandler(async(req,res)=>{
     )
 })
 
-export {registerUser,loginUser,logoutUser,refreshAccessToken,updateAccountDetails,changeCurrentPassword}
+const getUserchannelProfile=asyncHandler(async(req,res)=>{
+    const {username}=req.params
+
+    if(!username?.trim()){
+        throw new APIError(400,"Username is missing")
+    }
+
+    const channel=await User.aggregate([
+        {
+            $match:{
+                username:username
+            }
+        },{
+            $lookup:{
+                from:"Subscriptions",
+                localField:"_id",
+                foreignField:"channel",
+                as:"suscribers"
+            }
+        },
+        {
+            $lookup:{
+                from:"Subscriptions",
+                localField:"_id",
+                foreignField:"suscriber",
+                as:"suscribeTo"
+            }
+        },{
+            $addFields:{
+                suscriberCOunt:{
+                    $size:"$suscribers"
+                },
+                channelSuscribeToCount:{
+                    $size:"suscribeTo"
+                },
+                isSubscribed:{
+                    $cond:{
+                        if:{$in:[req.user?._id,"$suscribers.suscriber"]},
+                        then:true,
+                        else:false
+                    }
+                }
+            }
+        },{
+            $project:{
+                fullname:1,
+                username:1,
+                suscriberCOunt:1,
+                channelSuscribeToCount:1,
+                isSubscribed:1,
+                avatar:1,
+                coverImage:1,
+                email:1
+            }
+        }
+    ])
+
+    if(!channel?.length){
+        throw new APIError(404,"Channel doesnt exist")
+    }
+
+    return res.
+    status(200)
+    .json(
+        new APIResponse(200,channel[0],"channel fetched successfully")
+    )
+})
+export {registerUser,loginUser,logoutUser,refreshAccessToken,updateAccountDetails,changeCurrentPassword,updateUserCoverImage,getUserchannelProfile}
