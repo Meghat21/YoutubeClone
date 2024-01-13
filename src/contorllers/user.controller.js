@@ -49,7 +49,7 @@ const registerUser=asyncHandler(async(req,res)=>{
         throw new APIError(409,"User already exist")
     }
 
-    console.log(req.files)
+    // console.log(req.files)
     //check for images
     const avatarLocalPath=req.files?.avatar[0]?.path;
     // const coverImageLocalPath=req.files?.coverImage[0].path;
@@ -178,7 +178,7 @@ const loginUser=asyncHandler(async(req,res)=>{
 const logoutUser=asyncHandler(async(req,res)=>{
     await User.findByIdAndUpdate(
         req.user._id,{
-            $set:{
+            $unset:{
                 refreshToken:1
             }
         },{
@@ -406,69 +406,74 @@ const updateUserCoverImage=asyncHandler(async(req,res)=>{
 // })
 
 const getUserChannelProfile=asyncHandler(async(req,res)=>{
-    const {username} = req.body;
+    const {username} = req.params
 
-    if(!username?.trim()){
-        throw new APIError(400,"Please provide username")
+    if (!username?.trim()) {
+        throw new APIError(400, "username is missing")
     }
 
-    const channel=await User.aggregate([
+    const channel = await User.aggregate([
         {
-            $match:{
-                username:username
-            }
-        },{
-            $lookup:{
-                from:"Subscription",
-                localField:"_id",
-                foreignField:"channel",
-                as:"suscribers"
+            $match: {
+                username: username?.toLowerCase()
             }
         },
-            {
-                $lookup:{
-                    from:"Subscription",
-                    localField:"_id",
-                    foreignField:"suscriber",
-                    as:"suscriberedTo"
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
             }
-        },{
-            $addFields:{
-                suscribersCount:{
-                    $size:"suscribers"
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
                 },
-                channelsSuscribeToCOunt:{
-                    $size:"suscriberedTo"
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
                 },
-                isSuscribed:{
-                    $cond:{
-                        if:{$in:[req.user?._id,"$suscribers.suscriber"]}, //is present or not as a scuscriber'
-                        then:true,
-                        else:false
+                isSubscribed: {
+                    $cond: {
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                        then: true,
+                        else: false
                     }
                 }
             }
-        }   ,
+        },
         {
-            $project:{  //to give selected element and flag on
-                fullname:1,
-                username:1,
-                email:1,
-                suscribersCount:1,
-                channelsSuscribeToCOunt:1,
-                avatar:1,
-                coverImage:1
+            $project: {
+                fullName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+
             }
         }
     ])
 
-    if(!channel?.length){
-        throw new APIError(400,"Channel doesnt exist")
+    if (!channel?.length) {
+        throw new APIError(404, "channel does not exists")
     }
 
-    return res.status(200)
+    return res
+    .status(200)
     .json(
-        new APIResponse(200,channel[0],"")
+        new APIResponse(200, channel[0], "User channel fetched successfully")
     )
 })
 
